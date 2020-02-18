@@ -1,20 +1,30 @@
 import React, { useState } from 'react';
+
+import Grid from '@material-ui/core/Grid';
 import Square from "./Square";
-import RefreshIcon from '@material-ui/icons/Refresh';
-import Fab from '@material-ui/core/Fab';
+import Status from "./Status";
+
+const defaultBoard = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+const defaultPlayer = "X";
 
 export default function Board() {
-    const [boardSquares, setBoardSquares] = useState(Array(9).fill(null));
-    const [xIsNext, setXIsNext] = useState(true);
+    const [boardSquares, setBoardSquares] = useState(defaultBoard);
+    const [player, setPlayer] = useState(defaultPlayer);
+    const [winner, setWinner] = useState();
 
     //Handling button click - X or O
     function handleClick(index) {
-        const squares = [...boardSquares];
+        const isValid = boardSquares[index] === index;
+        if (isValid && !winner) {
+            const newBoardSquares = [...boardSquares];
+            newBoardSquares[index] = player;
 
-        if (calculateWinner(boardSquares) || squares[index]) return;
-        squares[index] = xIsNext ? "X" : "O";
-        setBoardSquares(squares);
-        setXIsNext(!xIsNext);
+            setBoardSquares(newBoardSquares);
+            setPlayer(player === "X" ? "O" : "X");
+
+            const winner = calculateWinner(newBoardSquares);
+            setWinner(winner);
+        }
     }
 
     //Render square
@@ -26,37 +36,30 @@ export default function Board() {
 
     //refresh page
     function refreshPage() {
-        window.location.reload(false);
+        setBoardSquares(defaultBoard);
+        setWinner(undefined);
     }
-
-    const winner = calculateWinner(boardSquares);
-    let status = winner ? `Winner is: ${winner}` : `Next player: ${xIsNext ? "X" : "O"}`;
 
     //Board
     return (
-        <div>
-            <div className="status">{status}</div>
-            <div className="board-row">
+        <Grid>
+            <Grid className="board-row">
                 {renderSquare(0)}
                 {renderSquare(1)}
                 {renderSquare(2)}
-            </div>
-            <div className="board-row">
+            </Grid>
+            <Grid className="board-row">
                 {renderSquare(3)}
                 {renderSquare(4)}
                 {renderSquare(5)}
-            </div>
-            <div className="board-row">
+            </Grid>
+            <Grid className="board-row">
                 {renderSquare(6)}
                 {renderSquare(7)}
                 {renderSquare(8)}
-            </div>
-            <div className="refresh">
-                <Fab color="primary" aria-label="add" onClick={refreshPage}>
-                    <RefreshIcon />
-                </Fab>
-            </div>
-        </div>
+            </Grid>
+            <Status name={player} winner={winner} handleRestart={refreshPage} />
+        </Grid>
     );
 }
 
@@ -73,6 +76,7 @@ function calculateWinner(squares) {
         [2, 4, 6]
     ];
 
+    //check winning lines if matches
     for (let i = 0; i < winningLines.length; i++) {
         const [a, b, c] = winningLines[i];
         if (squares[a] && squares[a] === squares[b] && squares[b] === squares[c]) {
